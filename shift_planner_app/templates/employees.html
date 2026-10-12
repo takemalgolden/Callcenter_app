@@ -1,0 +1,122 @@
+{% extends "base.html" %}{% block content %}
+<h1>従業員管理</h1><div class="card"><h2>共通アカウント・権限管理</h2><p class="muted">ログイン画面からの申請を承認できます。権限変更は次回のリクエストから反映されます。</p><table><tr><th>氏名</th><th>ログインID</th><th>状態</th><th>権限変更</th></tr>{% for a in accounts %}<tr><td>{{a.name or '管理者'}}</td><td>{{a.username}}</td><td>{% if a.approved %}承認済み{% else %}<strong>承認待ち</strong><form method="post"><input type="hidden" name="action" value="approve"><input type="hidden" name="user_id" value="{{a.id}}"><button type="submit">承認して有効化</button></form>{% endif %}</td><td><form method="post"><input type="hidden" name="action" value="set_role"><input type="hidden" name="user_id" value="{{a.id}}"><select name="role"><option value="operator" {% if a.role=='operator' %}selected{% endif %}>オペレーター</option><option value="admin" {% if a.role=='admin' %}selected{% endif %}>管理者</option></select><button type="submit">権限を保存</button></form></td></tr>{% endfor %}</table></div><p><a href="{{ url_for('employees_import_page') }}">Excel・CSVから一括登録／更新</a></p>
+<p class="muted">編集・無効化・再有効化ができます。無効化しても過去のシフトや希望休は削除されません。</p>
+<div class="card"><h2>従業員を追加</h2><p class="small muted">ログインIDは半角英数字・_・.・- の3～32文字。既存IDとの重複は登録できません。</p>
+<p class="small muted">月間の基準勤務日数は「月の日数 × 週最大勤務日数 ÷ 7（四捨五入）」で自動計算します（例：31日×週5日＝22日）。月間最大勤務日数は別の上限で、未設定なら追加の月上限はありません。上限が基準より小さい場合は上限を基準として採用します。承認済み希望休・週最大・最大連勤を守れない場合は仮シフトを保存せず理由を表示します。</p>
+<form method="get" class="card" style="padding:10px 15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label>基準勤務日数を表示する月 <input type="month" name="month" value="{{ selected_month }}" required></label><button type="submit">表示月を変更</button></form>
+<p class="small muted">最小・最大を同じ値にすると固定勤務時間（休憩込み）として扱います。勤務パターンの開始時刻〜終了時刻の長さで判定します（例：9:00〜18:00・休憩60分＝勤務9時間、実働8時間）。</p>
+<form method="post"><input type="hidden" name="action" value="add">
+<div class="grid">
+<label class="field">氏名<input name="name" required></label>
+<label class="field">ログインID<input name="username" pattern="[A-Za-z0-9_.-]{3,32}" minlength="3" maxlength="32" placeholder="例: tanaka01" required></label>
+<label class="field">月間最大勤務日数（任意）<input name="monthly_max_days" type="number" min="0" max="31" placeholder="未設定（自動算出のみ）"></label>
+<label class="field">最小勤務時間<input name="min_hours" type="number" min="0" max="24" step="any" value="4" required></label>
+<label class="field">最大勤務時間<input name="max_hours" type="number" min="0" max="24" step="any" value="9" required></label>
+<label class="field">週最大勤務日数（日曜〜土曜）<input name="weekly_max_days" type="number" min="1" max="7" value="5" required></label>
+<label class="field">最大連勤日数<input name="max_consecutive" type="number" min="1" max="31" value="5" required></label>
+</div>
+<p>保有スキル: {% for skill in ["consumer","merchant","PP"] %}<label><input type="checkbox" name="skills" value="{{ skill }}" {% if skill=="consumer" %}checked{% endif %}>{{ skill }}</label> {% endfor %}</p>
+<p>勤務可能: {% for label in ["早番","中番","遅番"] %}<label><input type="checkbox" name="allowed" value="{{ label }}" checked>{{ label }}</label> {% endfor %}</p>
+<p class="small muted" data-month-target-preview></p><button type="submit">登録</button></form></div>
+<div class="card"><h2>登録済み従業員（有効・無効をすべて表示）</h2>
+<p class="small muted">従業員の有効化・無効化・編集はこの画面で一元管理します。休憩管理には有効なオペレーターだけが表示されます。以前の休憩管理だけに登録された従業員も、起動時にここへ引き継ぎます。</p>
+<div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:14px 0">
+<label class="field" for="employee-keyword-filter" style="flex:1;min-width:230px;margin:0">オペレーターをキーワード検索
+<input id="employee-keyword-filter" type="search" autocomplete="off" placeholder="氏名・ログインID・スキル・有効／無効" aria-describedby="employee-filter-help"></label>
+<button type="button" id="employee-keyword-clear">検索をクリア</button>
+<strong id="employee-filter-result" class="small" role="status" aria-live="polite"></strong>
+</div>
+<p id="employee-filter-help" class="small muted">入力すると一覧をすぐに絞り込みます。複数のキーワードは空白で区切って検索できます（すべてに一致する人を表示）。無効化済みも検索対象です。</p>
+<p id="employee-no-match" class="small muted" hidden>一致するオペレーターがいません。検索キーワードを変更してください。</p>
+<div style="overflow-x:auto"><table><thead><tr><th>氏名</th><th>ログインID</th><th>スキル</th><th>勤務条件</th><th>状態・連携</th><th>操作</th></tr></thead><tbody>
+{% for e in employees %}
+<tr data-employee-row data-search-name="{{ e.name }}" data-search-id="{{ e.login_username or '' }}" data-search-skills="{{ e.skills }}" data-search-status="{{ '有効' if e.active else '無効' }}"><td>{{ e.name }}</td><td><code>{{ e.login_username or "未設定" }}</code></td><td>{{ e.skills }}</td><td>{{ selected_month }}基準{{ e.effective_monthly_days }}日（自動{{ e.auto_monthly_days }}日） / 月上限{{ e.monthly_max_days ~ '日' if e.monthly_max_days is not none else '未設定' }} / 週最大{{ e.weekly_max_days }}日 / {% if e.min_hours == e.max_hours %}固定{{ e.min_hours }}時間{% else %}{{ e.min_hours }}〜{{ e.max_hours }}時間{% endif %} / 最大{{ e.max_consecutive }}連勤</td>
+<td><strong style="color:{{ '#146c43' if e.active else '#a12a21' }}">{{ "有効" if e.active else "無効" }}</strong>{% if e.source_user_id is not none %}<div class="small muted">休憩アプリ連携</div>{% endif %}</td>
+<td><details><summary style="cursor:pointer">編集</summary>
+<form method="post" style="min-width:230px;margin-top:10px">
+<input type="hidden" name="action" value="edit"><input type="hidden" name="employee_id" value="{{ e.id }}">
+<label class="field">氏名<input name="name" value="{{ e.name }}" required></label>
+<label class="field">ログインID<input name="username" value="{{ e.login_username or '' }}" pattern="[A-Za-z0-9_.-]{3,32}" minlength="3" maxlength="32" required></label>
+<label class="field">月間最大勤務日数（任意）<input name="monthly_max_days" type="number" min="0" max="31" placeholder="未設定" value="{{ e.monthly_max_days if e.monthly_max_days is not none else '' }}"></label>
+<label class="field">最小勤務時間<input name="min_hours" type="number" min="0" max="24" step="any" value="{{ e.min_hours }}" required></label>
+<label class="field">最大勤務時間<input name="max_hours" type="number" min="0" max="24" step="any" value="{{ e.max_hours }}" required></label>
+<label class="field">週最大勤務日数（日曜〜土曜）<input name="weekly_max_days" type="number" min="1" max="7" value="{{ e.weekly_max_days }}" required></label>
+<label class="field">最大連勤日数<input name="max_consecutive" type="number" min="1" max="31" value="{{ e.max_consecutive }}" required></label>
+<div>スキル:<br>{% for skill in ["consumer","merchant","PP"] %}<label><input type="checkbox" name="skills" value="{{ skill }}" {% if skill in e.skills.split(",") %}checked{% endif %}>{{ skill }}</label> {% endfor %}</div>
+<div>勤務可能:<br>{% for label,field in [("早番","early_ok"),("中番","mid_ok"),("遅番","late_ok")] %}<label><input type="checkbox" name="allowed" value="{{ label }}" {% if e[field] %}checked{% endif %}>{{ label }}</label> {% endfor %}</div>
+<p class="small muted" data-month-target-preview></p><button type="submit">変更を保存</button></form></details>
+<form method="post" style="margin-top:8px" onsubmit="return confirm('{{ '有効化' if not e.active else '無効化' }}しますか？')">
+<input type="hidden" name="employee_id" value="{{ e.id }}">
+{% if e.active %}<input type="hidden" name="action" value="delete"><button class="danger" type="submit">無効化</button>
+{% else %}<input type="hidden" name="action" value="restore"><button type="submit">有効化する</button>{% endif %}
+</form>
+{% if e.login_username %}
+<details style="margin-top:8px"><summary style="cursor:pointer">パスワード再設定</summary>
+<form method="post" style="min-width:230px;margin-top:8px" onsubmit="return confirm('この従業員のパスワードを再設定しますか？')">
+<input type="hidden" name="action" value="reset_password"><input type="hidden" name="employee_id" value="{{ e.id }}">
+<label class="field">新しい仮パスワード（8〜16文字）<span style="display:flex;gap:4px"><input type="password" name="new_password" id="reset_pw_{{ e.id }}" minlength="8" maxlength="16" autocomplete="new-password" required><button type="button" onclick="let x=document.getElementById('reset_pw_{{ e.id }}');x.type=x.type==='password'?'text':'password'">表示/非表示</button></span></label>
+<p class="small muted">大文字・小文字・数字・記号のうち3種類以上。次回ログイン時に変更が必要です。</p>
+<button type="submit">パスワードを再設定</button></form></details>
+{% endif %}
+</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="small muted">「削除」は安全のため無効化として実装しています。休憩管理画面からの編集・登録は廃止しました。氏名・スキル・有効状態はこの画面で一元管理します。</p>
+</div>
+<script>
+(() => {
+  const month = {{ selected_month|tojson }};
+  const [year, number] = month.split('-').map(Number);
+  const days = new Date(year, number, 0).getDate();
+  document.querySelectorAll('form').forEach(form => {
+    const weekly = form.querySelector('[name="weekly_max_days"]');
+    const cap = form.querySelector('[name="monthly_max_days"]');
+    const label = form.querySelector('[data-month-target-preview]');
+    if (!weekly || !cap || !label) return;
+    const refresh = () => {
+      const auto = Math.round(days * Number(weekly.value || 0) / 7);
+      const maximum = cap.value.trim() === '' ? null : Number(cap.value);
+      const target = maximum === null ? auto : Math.min(auto, maximum);
+      label.textContent = `${month} の基準勤務日数：${target}日（自動計算 ${auto}日${maximum === null ? '・月上限未設定' : '・月上限 ' + maximum + '日'}）`;
+    };
+    weekly.addEventListener('input', refresh);
+    cap.addEventListener('input', refresh);
+    refresh();
+  });
+})();
+</script>
+<script>
+(() => {
+  const input = document.getElementById('employee-keyword-filter');
+  const clearButton = document.getElementById('employee-keyword-clear');
+  const result = document.getElementById('employee-filter-result');
+  const noMatch = document.getElementById('employee-no-match');
+  const rows = Array.from(document.querySelectorAll('[data-employee-row]'));
+  if (!input || !clearButton || !result || !noMatch) return;
+  const normalize = value => String(value ?? '').normalize('NFKC').toLowerCase().trim();
+  const searchTexts = rows.map(row => normalize([
+    row.dataset.searchName, row.dataset.searchId,
+    row.dataset.searchSkills, row.dataset.searchStatus
+  ].join(' ')));
+  const refresh = () => {
+    const keywords = normalize(input.value).split(/\s+/).filter(Boolean);
+    let visible = 0;
+    rows.forEach((row, index) => {
+      const matches = keywords.every(keyword => searchTexts[index].includes(keyword));
+      row.hidden = !matches;
+      row.style.display = matches ? '' : 'none';
+      if (matches) visible++;
+    });
+    result.textContent = `表示 ${visible} / ${rows.length} 名`;
+    noMatch.hidden = visible !== 0;
+  };
+  input.addEventListener('input', refresh);
+  clearButton.addEventListener('click', () => {
+    input.value = '';
+    refresh();
+    input.focus();
+  });
+  refresh();
+})();
+</script>
+{% endblock %}

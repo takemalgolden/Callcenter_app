@@ -1,0 +1,245 @@
+{% extends "base.html" %}{% block content %}
+<style>
+.leave-layout{display:grid;grid-template-columns:minmax(310px,1.6fr) minmax(260px,1fr);gap:16px;align-items:start}
+.leave-calendar-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 16px}
+.leave-month{font-size:20px;font-weight:700;text-align:center}
+.leave-navigation{background:#edf2f7;color:#24435f}
+.leave-weekdays,.leave-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.leave-weekdays span{text-align:center;font-size:12px;font-weight:700;color:#687788;padding-bottom:6px}
+.leave-days button{min-height:63px;padding:5px;border:1px solid #dae2ec;border-radius:8px;background:#fff;color:#22384e;text-align:left;display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:100%;overflow-wrap:anywhere}
+.leave-days button:not(:disabled):hover{border-color:#245b8f;background:#f2f8ff}
+.leave-days button.selected{background:#d9eafa;border:2px solid #245b8f;font-weight:700}
+.leave-days button.menu-open{outline:3px solid #6e9bd2;outline-offset:1px}
+.leave-days button.requested{background:#f5f0df;color:#6e5a19;cursor:not-allowed}
+.leave-days button:disabled{opacity:.9}
+.leave-days .blank{border:0}
+.leave-days .number{font-weight:700;font-size:14px}
+.leave-days .marker{font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+.leave-days .prompt{color:#6b7885;font-size:10px}
+.leave-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin-top:12px;color:#536474}
+.leave-legend .dot{display:inline-block;width:11px;height:11px;margin-right:4px;border-radius:3px;border:1px solid #b5c2cf;vertical-align:middle}
+.leave-chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.leave-chips button{background:#edf3fb;color:#1c4f7b;border:1px solid #adc7e6;font-size:12px;padding:6px 9px}
+.leave-alert{background:#fff5df;border-left:4px solid #d28c00;padding:12px;margin:12px 0;white-space:pre-line}
+.leave-good{background:#edf7ed;border-left:4px solid #469254;padding:12px;margin:12px 0;white-space:pre-line}
+.leave-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.leave-actions .secondary{background:#e8edf3;color:#24435f}
+/* The menu lives on document.body so it is not clipped by any calendar/card container. */
+.leave-date-menu{position:fixed;z-index:1000;width:220px;max-width:calc(100vw - 16px);padding:7px;background:#fff;border:1px solid #bdccdf;border-radius:11px;box-shadow:0 10px 30px #20354b30;display:grid;gap:2px;max-height:calc(100vh - 20px);overflow-y:auto}
+.leave-date-menu[hidden]{display:none}
+.leave-date-menu .menu-title{font-size:12px;font-weight:700;color:#4d6175;padding:6px 9px;border-bottom:1px solid #e6edf4;margin-bottom:3px}
+.leave-date-menu button{background:transparent;color:#263e52;border:0;border-radius:6px;padding:10px 11px;text-align:left;font-size:13px;width:100%;min-height:35px}
+.leave-date-menu button:hover,.leave-date-menu button:focus-visible{background:#e9f3fe;color:#184b7f;outline:none}
+.leave-date-menu button.current{background:#d9eafa;font-weight:bold}
+.leave-date-menu .remove{border-top:1px solid #e5e9ee;color:#9a3939;margin-top:3px}
+@media(max-width:850px){.leave-layout{grid-template-columns:1fr}.leave-days button{min-height:54px}}
+@media(max-width:420px){.leave-days{gap:3px}.leave-days button{min-height:50px;padding:4px}.leave-days .marker{font-size:9px}}
+</style>
+<h1>希望休の提出</h1>
+<p>{{ employee_name }} さんの希望を日付ごとに選び、最後にまとめて提出できます。<strong>カレンダーの日付をクリックして、希望区分を選択</strong>してください。</p>
+<div class="leave-layout">
+  <section class="card">
+    <h2 style="margin-top:0">1. 日付をクリックして希望区分を選ぶ</h2>
+    <div class="leave-calendar-header">
+      <button class="leave-navigation" type="button" id="leave-prev" aria-label="前月">← 前月</button>
+      <div id="leave-month" class="leave-month" aria-live="polite"></div>
+      <button class="leave-navigation" type="button" id="leave-next" aria-label="翌月">翌月 →</button>
+    </div>
+    <div class="leave-weekdays" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+    <div id="leave-days" class="leave-days" role="group" aria-label="希望日・希望区分選択カレンダー"></div>
+    <div class="leave-legend">
+      <span><span class="dot" style="background:#d9eafa"></span>今回提出する希望</span>
+      <span><span class="dot" style="background:#f5f0df"></span>申請中・承認済み（変更不可）</span>
+    </div>
+    <div class="leave-actions" style="margin-top:14px">
+      <button class="secondary" type="button" id="leave-this-month">今月へ</button>
+      <button class="secondary" type="button" id="leave-clear">すべて解除</button>
+    </div>
+    <h3>提出する希望：<span id="leave-count">0</span>日</h3>
+    <div id="leave-chips" class="leave-chips" aria-live="polite"><span class="muted">日付をクリックすると区分メニューが開きます。</span></div>
+  </section>
+  <section class="card">
+    <h2 style="margin-top:0">2. 内容を確認してまとめて提出</h2>
+    <form method="post" id="leave-form">
+      <div id="leave-hidden-dates"></div>
+      <p class="small muted">日付ごとに、終日・午前休・午後休など異なる希望を一度に提出できます。備考は今回の申請全体に共通です。</p>
+      <label class="field">備考（任意）<textarea name="note" rows="3" maxlength="500" placeholder="補足があれば入力してください">{{ draft_note }}</textarea></label>
+      <p class="small">今月の基準勤務日数：<strong>{{ monthly_days }}日</strong>（週最大 {{ weekly_max_days }}日から自動算出{% if monthly_max_days is not none %}・月間上限 {{ monthly_max_days }}日{% endif %}）</p>
+      <div id="leave-workday-impact" class="leave-good" role="status">日付を選択すると勤務日数の見込みを表示します。</div>
+      <div id="leave-reason-box" hidden>
+        <label class="field">月間の基準勤務日数を下回る理由 <span style="color:#a33636">（必須）</span>
+          <textarea id="leave-reason" name="shortfall_reason" rows="4" maxlength="500" placeholder="勤務日数が登録値を下回る理由を記入してください。">{{ draft_reason }}</textarea>
+        </label>
+        <p class="small muted">理由は管理者の審査画面に表示されます。理由を記入すれば希望休を提出できます。</p>
+      </div>
+      <button type="submit" id="leave-submit">選択した<span id="leave-submit-count">0</span>日を一括提出</button>
+    </form>
+  </section>
+</div>
+<div class="card"><h2>自分の提出履歴</h2>
+<p class="small muted">申請中・承認済みの日付はカレンダーに表示されます。却下された日付は再申請できます。</p>
+<table><thead><tr><th>希望日</th><th>区分</th><th>状態</th><th>備考・理由</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ r.request_date }}</td><td>{{ r.request_type }}</td><td>{{ {"pending":"申請中","approved":"承認済み","rejected":"却下"}.get(r.status,r.status) }}</td><td style="white-space:pre-wrap">{{ r.note }}</td></tr>
+{% else %}<tr><td colspan="4">まだ提出履歴はありません。</td></tr>{% endfor %}
+</tbody></table></div>
+<script>
+(() => {
+  'use strict';
+  const active = {{ active_requests|tojson }};
+  const weeklyMaxDays = {{ weekly_max_days|tojson }};
+  const monthlyMaxDays = {{ monthly_max_days|tojson }};
+  const targetForMonth = (y,m) => {
+    const auto = Math.round(new Date(y,m,0).getDate() * weeklyMaxDays / 7);
+    return monthlyMaxDays === null ? auto : Math.min(auto, monthlyMaxDays);
+  };
+  const initialMonth = {{ current_month|tojson }};
+  const draft = {{ draft_selections|tojson }};
+  const options = [
+    ['通常の休み希望', '通常の休み希望（終日）'],
+    ['できれば休み', 'できれば休み（終日）'],
+    ['有給休暇', '有給休暇（終日）'],
+    ['確定休', '確定休（終日）'],
+    ['午前休', '午前休（13:00まで）'],
+    ['午後休', '午後休（13:00以降）']
+  ];
+  const occupied = new Map(active.map(item => [item.request_date, item]));
+  const fullDays = new Set(['通常の休み希望','できれば休み','有給休暇','確定休','申請中']);
+  // A date and its own type are stored together, so mixed categories need only one submission.
+  const selected = new Map(Object.entries(draft).filter(([day, kind]) =>
+    !occupied.has(day) && options.some(([value]) => value === kind)));
+  let [year, month] = initialMonth.split('-').map(Number);
+  const $ = id => document.getElementById(id);
+  const iso = (y,m,d) => `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const menu = document.createElement('div');
+  menu.className = 'leave-date-menu';menu.hidden = true;menu.id = 'leave-date-menu';
+  menu.setAttribute('role','group');menu.setAttribute('aria-label','日付別の希望区分');
+  document.body.appendChild(menu);
+  let openDay = null;
+  let opener = null;
+
+  function closeMenu(restoreFocus = false) {
+    const oldOpener = opener;
+    menu.hidden = true;menu.replaceChildren();openDay = null;opener = null;
+    if (oldOpener) oldOpener.setAttribute('aria-expanded','false');
+    if (restoreFocus && oldOpener && oldOpener.isConnected) oldOpener.focus();
+  }
+  function openMenu(day, button) {
+    if (openDay === day) {closeMenu(true);return;}
+    closeMenu();openDay = day;opener = button;
+    button.setAttribute('aria-expanded','true');
+    const title = document.createElement('div');title.className = 'menu-title';title.textContent = day + ' の希望';menu.appendChild(title);
+    for (const [value, text] of options) {
+      const item = document.createElement('button');item.type = 'button';item.textContent = text;
+      if (selected.get(day) === value) item.classList.add('current');
+      item.addEventListener('click', () => {
+        if (!selected.has(day) && selected.size >= 93) {
+          alert('一度に提出できるのは93日までです。');return;
+        }
+        selected.set(day,value);closeMenu();render();focusDay(day);
+      });
+      menu.appendChild(item);
+    }
+    if (selected.has(day)) {
+      const clear = document.createElement('button');clear.type = 'button';clear.className = 'remove';clear.textContent = 'この日の希望を解除';
+      clear.addEventListener('click', () => {selected.delete(day);closeMenu();render();focusDay(day);});
+      menu.appendChild(clear);
+    }
+    menu.hidden = false;
+    const rect = button.getBoundingClientRect();
+    // Place the popover within the viewport, including near its right/bottom edges.
+    const width = menu.offsetWidth,height = menu.offsetHeight;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    const below = rect.bottom + 6;
+    const top = below + height < window.innerHeight - 8 ? below : Math.max(8, rect.top - height - 6);
+    menu.style.left = left+'px';menu.style.top = top+'px';
+    const first = menu.querySelector('button.current') || menu.querySelector('button');
+    if (first) first.focus();
+  }
+  function focusDay(day) {
+    const button = [...$('leave-days').querySelectorAll('button[data-date]')]
+      .find(item => item.dataset.date === day);
+    if (button) button.focus();
+  }
+  function render() {
+    closeMenu();
+    $('leave-month').textContent = `${year}年${month}月`;
+    const days = $('leave-days');days.replaceChildren();
+    const firstWeekday = new Date(year,month-1,1).getDay();
+    const maxDay = new Date(year,month,0).getDate();
+    for(let blank=0;blank<firstWeekday;blank++) {
+      const node=document.createElement('span');node.className='blank';days.appendChild(node);
+    }
+    for(let day=1;day<=maxDay;day++) {
+      const key = iso(year,month,day),existing=occupied.get(key),kind=selected.get(key);
+      const btn=document.createElement('button');btn.type='button';btn.dataset.date=key;
+      btn.className = (existing?'requested ':'') + (kind?'selected':'');
+      btn.disabled=!!existing;btn.setAttribute('aria-haspopup','true');btn.setAttribute('aria-expanded','false');
+      btn.setAttribute('aria-label',key+(existing?` ${existing.request_type}（申請済み）`:(kind?` ${kind}、クリックして変更`:'、クリックして希望区分を選択')));
+      const number=document.createElement('span');number.className='number';number.textContent=day;btn.appendChild(number);
+      if(existing || kind){const mark=document.createElement('span');mark.className='marker';mark.textContent=existing?existing.request_type:kind;btn.appendChild(mark);}
+      else {const msg=document.createElement('span');msg.className='prompt';msg.textContent='＋ 希望を選ぶ';btn.appendChild(msg);}
+      btn.addEventListener('click',()=>openMenu(key,btn));days.appendChild(btn);
+    }
+    const chips=$('leave-chips');chips.replaceChildren();
+    const chosen=[...selected.entries()].sort(([a],[b])=>a.localeCompare(b));
+    $('leave-count').textContent=chosen.length;$('leave-submit-count').textContent=chosen.length;
+    if(!chosen.length){const msg=document.createElement('span');msg.className='muted';msg.textContent='カレンダーの日付をクリックすると区分メニューが開きます。';chips.appendChild(msg);}
+    for(const [day,kind] of chosen) {
+      const chip=document.createElement('button');chip.type='button';chip.textContent=day+' '+kind+' ×';
+      chip.setAttribute('aria-label',day+'の'+kind+'を解除');
+      chip.addEventListener('click',()=>{selected.delete(day);render();});chips.appendChild(chip);
+    }
+    calculateImpact();
+  }
+  function calculateImpact() {
+    const chosen=[...selected.keys()],months=new Set(chosen.map(d=>d.slice(0,7)));
+    const summary=[];let shortfall=false;
+    for(const key of [...months].sort()) {
+      const [y,m]=key.split('-').map(Number),total=new Date(y,m,0).getDate(),unavailable=new Set();
+      for(const r of active) {if(r.request_date.slice(0,7)===key && fullDays.has(r.request_type)) unavailable.add(r.request_date);}
+      for(const [day,kind] of selected) {if(day.slice(0,7)===key && fullDays.has(kind)) unavailable.add(day);}
+      const groups=new Map();
+      for(let d=1;d<=total;d++) {
+        const day=iso(y,m,d);
+        if (unavailable.has(day)) continue;
+        const dt=new Date(y,m-1,d);
+        const sunday=new Date(y,m-1,d-dt.getDay());
+        const keySunday=iso(sunday.getFullYear(),sunday.getMonth()+1,sunday.getDate());
+        groups.set(keySunday,(groups.get(keySunday)||0)+1);
+      }
+      const possible=[...groups.values()].reduce((sum,n)=>sum+Math.min(n,weeklyMaxDays),0);
+      const requiredDays=targetForMonth(y,m);
+      if(possible<requiredDays)shortfall=true;
+      summary.push(`${key}：希望反映後の最大勤務可能日数 ${possible}日（自動基準 ${requiredDays}日）`);
+    }
+    const impact=$('leave-workday-impact');impact.className=shortfall?'leave-alert':'leave-good';
+    impact.textContent=summary.length?summary.join('\n'):'日付を選択すると勤務日数の見込みを表示します。';
+    $('leave-reason-box').hidden=!shortfall;$('leave-reason').required=shortfall;
+  }
+  $('leave-prev').addEventListener('click',()=>{const dt=new Date(year,month-2,1);year=dt.getFullYear();month=dt.getMonth()+1;render();});
+  $('leave-next').addEventListener('click',()=>{const dt=new Date(year,month,1);year=dt.getFullYear();month=dt.getMonth()+1;render();});
+  $('leave-this-month').addEventListener('click',()=>{[year,month]=initialMonth.split('-').map(Number);render();});
+  $('leave-clear').addEventListener('click',()=>{selected.clear();render();});
+  document.addEventListener('pointerdown',event=>{
+    if(!menu.hidden && !menu.contains(event.target) && (!opener || !opener.contains(event.target))) closeMenu();
+  });
+  document.addEventListener('keydown',event=>{if(event.key==='Escape' && !menu.hidden){event.preventDefault();closeMenu(true);}});
+  window.addEventListener('resize',()=>closeMenu());
+  window.addEventListener('scroll',()=>closeMenu(),true);
+  $('leave-form').addEventListener('submit',event=>{
+    if(!selected.size){event.preventDefault();alert('カレンダーから希望区分を1日以上選択してください。');return;}
+    calculateImpact();
+    if($('leave-reason').required&&!$('leave-reason').value.trim()){
+      event.preventDefault();$('leave-reason').focus();return;
+    }
+    const holder=$('leave-hidden-dates');holder.replaceChildren();
+    for(const [day,kind] of [...selected.entries()].sort(([a],[b])=>a.localeCompare(b))){
+      const dateInput=document.createElement('input');dateInput.type='hidden';dateInput.name='request_dates';dateInput.value=day;
+      const typeInput=document.createElement('input');typeInput.type='hidden';typeInput.name='request_types';typeInput.value=kind;
+      holder.append(dateInput,typeInput);
+    }
+  });
+  render();
+})();
+</script>
+{% endblock %}

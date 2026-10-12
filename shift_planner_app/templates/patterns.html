@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>勤務パターン</h1><p class="muted">午前休・午後休の承認を反映するには、該当する勤務時間帯の半日パターンが必要です。午前休は13:00以降開始、午後休は13:00以前終了とし、<strong>半日パターンの「勤務区分」も早番・中番・遅番のいずれかに設定</strong>してください。希望休が承認済みの場合は通常の最小勤務時間を緩和しますが、最大勤務時間は守ります。</p><p class="muted">開始・終了時刻は10分刻みで選択できます。<strong>勤務時間は休憩時間を含む「終了－開始」の長さ</strong>です。例：9:00〜18:00（休憩60分）は勤務9時間・実働8時間として従業員の最小／最大勤務時間を判定します。</p><p class="muted">変更を保存すると、既存のシフトに紐づく同じパターンにも時刻変更が反映されます。確定済みシフトに使用しているパターンは、変更前に確認してください。</p>
+<div class="card">
+  <h2>新規追加</h2>
+  <form method="post">
+    <input type="hidden" name="action" value="add">
+    <div class="grid">
+      <label class="field">名称<input name="name" required placeholder="例: 半日・早番（午後休）"></label>
+      <label class="field">勤務区分<select name="shift_type" required><option value="auto">名称から判定（既存互換）</option><option value="早番">早番</option><option value="中番">中番</option><option value="遅番">遅番</option><option value="共通">共通（全区分で勤務可能）</option></select></label>
+      <label class="field">開始<select name="start_time" required aria-label="開始時刻">{% for hour in range(24) %}{% for minute in range(0,60,10) %}{% set time_value = "%02d:%02d"|format(hour,minute) %}<option value="{{ time_value }}" {% if '09:20' == time_value %}selected{% endif %}>{{ time_value }}</option>{% endfor %}{% endfor %}</select></label>
+      <label class="field">終了<select name="end_time" required aria-label="終了時刻">{% for hour in range(24) %}{% for minute in range(0,60,10) %}{% set time_value = "%02d:%02d"|format(hour,minute) %}<option value="{{ time_value }}" {% if '18:00' == time_value %}selected{% endif %}>{{ time_value }}</option>{% endfor %}{% endfor %}</select></label>
+      <label class="field">休憩（分）<input type="number" name="break_minutes" min="0" max="240" value="60" required></label>
+    </div>
+    <p class="muted small" data-duration-preview aria-live="polite"></p>
+    <button>追加</button>
+  </form>
+</div>
+<div class="card">
+  <h2>登録済みパターンの編集・削除</h2>
+  <p class="muted small">削除済みのパターンも履歴表示のため一覧に残る場合があります。過去シフトで使用されているパターンは、記録を壊さないよう無効化します。</p>
+  <table>
+    <tr><th>名称</th><th>開始</th><th>終了</th><th>休憩（分）</th><th>状態</th><th>操作</th></tr>
+    {% for p in patterns %}
+    <tr>
+      <td colspan="6">
+        <form method="post" class="grid" style="align-items:end">
+          <input type="hidden" name="action" value="update">
+          <input type="hidden" name="pattern_id" value="{{ p.id }}">
+          <label class="field">名称<input name="name" value="{{ p.name }}" required></label>
+          <label class="field">勤務区分<select name="shift_type" required>{% for value,label in [('auto','名称から判定（既存互換）'),('早番','早番'),('中番','中番'),('遅番','遅番'),('共通','共通（全区分）')] %}<option value="{{ value }}" {% if (p.shift_type or 'auto')==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+          <label class="field">開始<select name="start_time" required aria-label="開始時刻">{% for hour in range(24) %}{% for minute in range(0,60,10) %}{% set time_value = "%02d:%02d"|format(hour,minute) %}<option value="{{ time_value }}" {% if p.start_time == time_value %}selected{% endif %}>{{ time_value }}</option>{% endfor %}{% endfor %}</select></label>
+          <label class="field">終了<select name="end_time" required aria-label="終了時刻">{% for hour in range(24) %}{% for minute in range(0,60,10) %}{% set time_value = "%02d:%02d"|format(hour,minute) %}<option value="{{ time_value }}" {% if p.end_time == time_value %}selected{% endif %}>{{ time_value }}</option>{% endfor %}{% endfor %}</select></label>
+          <label class="field">休憩（分）<input type="number" name="break_minutes" min="0" max="240" value="{{ p.break_minutes }}" required></label>
+          <label class="field">状態<select name="active"><option value="1" {% if p.active %}selected{% endif %}>有効</option><option value="0" {% if not p.active %}selected{% endif %}>無効</option></select></label>
+          <div><p class="small muted" data-duration-preview aria-live="polite"></p><button>変更を保存</button></div>
+        </form>
+        <form method="post" onsubmit="return confirm('この勤務パターンを削除または無効化しますか？')">
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="pattern_id" value="{{ p.id }}">
+          <button class="danger">削除</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<script>
+// The preview matches the server-side inclusive (start-to-end) check.
+function updatePatternDurationPreview(form) {
+  const display = form.querySelector('[data-duration-preview]');
+  if (!display) return;
+  const start = form.querySelector('[name="start_time"]')?.value;
+  const end = form.querySelector('[name="end_time"]')?.value;
+  const minutes = Number(form.querySelector('[name="break_minutes"]')?.value || 0);
+  if (!start || !end || !Number.isFinite(minutes)) { display.textContent = ''; return; }
+  const toMinutes = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const gross = toMinutes(end) - toMinutes(start);
+  if (gross <= 0 || minutes < 0 || minutes >= gross) {
+    display.textContent = '時刻・休憩時間を確認してください。'; return;
+  }
+  const label = n => `${Math.floor(n / 60)}時間${String(n % 60).padStart(2,'0')}分`;
+  display.textContent = `勤務時間（休憩込み）：${label(gross)} ／ 休憩：${minutes}分 ／ 実働：${label(gross - minutes)}`;
+}
+document.querySelectorAll('form').forEach(form => {
+  if (!form.querySelector('[data-duration-preview]')) return;
+  form.addEventListener('input', () => updatePatternDurationPreview(form));
+  form.addEventListener('change', () => updatePatternDurationPreview(form));
+  updatePatternDurationPreview(form);
+});
+</script>
+{% endblock %}

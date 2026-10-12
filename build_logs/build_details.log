@@ -1,0 +1,147 @@
+﻿Build started 2026-10-12T22:31:49.4744486+09:00
+
+== Check pip ==
+pip 25.0.1 from C:\Users\takemaru\AppData\Local\CallCenterBuildPython312Nuget\tools\Lib\site-packages\pip (python 3.12)
+
+
+== Python version ==
+Python 3.12.10
+
+== Install dependencies ==
+Requirement already satisfied: pyinstaller<7,>=6 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (6.22.3)
+Requirement already satisfied: Flask<4.0,>=3.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from -r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (3.1.3)
+Requirement already satisfied: openpyxl<4,>=3.1 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from -r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 2)) (3.1.5)
+Requirement already satisfied: altgraph in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (0.17.5)
+Requirement already satisfied: packaging>=22.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (26.3)
+Requirement already satisfied: pefile>=2022.5.30 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (2024.8.26)
+Requirement already satisfied: pyinstaller-hooks-contrib>=2026.7 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (2026.8)
+Requirement already satisfied: pywin32-ctypes>=0.2.1 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (0.2.3)
+Requirement already satisfied: setuptools>=42.0.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from pyinstaller<7,>=6) (84.0.0)
+Requirement already satisfied: blinker>=1.9.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (1.9.0)
+Requirement already satisfied: click>=8.1.3 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (8.5.0)
+Requirement already satisfied: itsdangerous>=2.2.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (2.2.0)
+Requirement already satisfied: jinja2>=3.1.2 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: markupsafe>=2.1.1 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (3.0.4)
+Requirement already satisfied: werkzeug>=3.1.0 in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from Flask<4.0,>=3.0->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 1)) (3.1.9)
+Requirement already satisfied: et-xmlfile in c:\users\takemaru\appdata\local\callcenterbuildpython312nuget\tools\lib\site-packages (from openpyxl<4,>=3.1->-r C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\shift_planner_app\requirements.txt (line 2)) (2.0.0)
+
+== Compile check ==
+
+== PyInstaller build ==
+190 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.8
+191 INFO: Python: 3.12.10
+223 INFO: Platform: Windows-11-10.0.22621-SP0
+223 INFO: Python environment: C:\Users\takemaru\AppData\Local\CallCenterBuildPython312Nuget\tools
+225 INFO: wrote C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\CallCenterUnified.spec
+230 INFO: Removing temporary files and cleaning cache in C:\Users\takemaru\AppData\Local\pyinstaller
+971 INFO: Module search paths (PYTHONPATH):
+['C:\\Users\\takemaru\\Downloads\\シフト休憩提案アプリ統合版',
+ 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\python312.zip',
+ 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\DLLs',
+ 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib',
+ 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools',
+ 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages',
+ 'C:\\Users\\takemaru\\Downloads\\シフト休憩提案アプリ統合版',
+ 'C:\\Users\\takemaru\\Downloads\\シフト休憩提案アプリ統合版\\shift_planner_app',
+ 'C:\\Users\\takemaru\\Downloads\\シフト休憩提案アプリ統合版\\break_engine']
+1391 INFO: Appending 'datas' from .spec
+1392 INFO: checking Analysis
+1393 INFO: Building Analysis because Analysis-00.toc is non existent
+1393 INFO: Looking for Python shared library...
+1393 INFO: Using Python shared library: C:\Users\takemaru\AppData\Local\CallCenterBuildPython312Nuget\tools\python312.dll
+1393 INFO: Running Analysis Analysis-00.toc
+1393 INFO: Target bytecode optimization level: 0
+1393 INFO: Initializing module dependency graph...
+1394 INFO: Initializing module graph hook caches...
+1416 INFO: Analyzing modules for base_library.zip ...
+2949 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+3643 INFO: Processing standard module hook 'hook-math.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+4752 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+5836 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+6320 INFO: Caching module dependency graph...
+6361 INFO: Analyzing C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\unified.py
+6384 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+7635 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+7637 INFO: SetuptoolsInfo: initializing cached setuptools info...
+8775 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+8819 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+8908 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+9159 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+9371 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+9419 INFO: Processing standard module hook 'hook-webbrowser.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+9776 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+10039 INFO: Processing standard module hook 'hook-jinja2.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11172 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11173 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
+11179 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+11198 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11234 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11235 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
+11246 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11247 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
+11390 INFO: Processing standard module hook 'hook-_osx_support.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+11405 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11701 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+11707 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11717 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11718 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+12355 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12356 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+12894 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12895 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
+12957 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+13003 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+13004 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
+13246 INFO: Processing standard module hook 'hook-openpyxl.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+13736 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks'
+14812 INFO: Analyzing hidden import 'openpyxl.compat.abc'
+14813 INFO: Analyzing hidden import 'openpyxl.compat.product'
+14815 INFO: Analyzing hidden import 'openpyxl.compat.singleton'
+14817 INFO: Analyzing hidden import 'openpyxl.descriptors.slots'
+14819 INFO: Analyzing hidden import 'openpyxl.packaging.interface'
+14820 INFO: Analyzing hidden import 'openpyxl.utils.dataframe'
+14824 INFO: Analyzing hidden import 'openpyxl.utils.inference'
+14826 INFO: Analyzing hidden import 'openpyxl.worksheet.cell_watch'
+14828 INFO: Analyzing hidden import 'openpyxl.worksheet.controls'
+14837 INFO: Analyzing hidden import 'openpyxl.worksheet.custom'
+14839 INFO: Analyzing hidden import 'openpyxl.worksheet.errors'
+14842 INFO: Analyzing hidden import 'openpyxl.worksheet.picture'
+14843 INFO: Analyzing hidden import 'openpyxl.worksheet.smart_tag'
+14846 INFO: Processing module hooks (post-graph stage)...
+14992 INFO: Performing binary vs. data reclassification (27 entries)
+14998 INFO: Looking for ctypes DLLs
+15041 INFO: Analyzing run-time hooks ...
+15044 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+15047 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+15050 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+15052 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'C:\\Users\\takemaru\\AppData\\Local\\CallCenterBuildPython312Nuget\\tools\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+15066 INFO: Creating base_library.zip...
+15093 INFO: Looking for dynamic libraries
+16044 INFO: Extra DLL search directories (AddDllDirectory): []
+16044 INFO: Extra DLL search directories (PATH): []
+16518 INFO: Warnings written to C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\build\CallCenterUnified\warn-CallCenterUnified.txt
+16603 INFO: Graph cross-reference written to C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\build\CallCenterUnified\xref-CallCenterUnified.html
+16646 INFO: checking PYZ
+16646 INFO: Building PYZ because PYZ-00.toc is non existent
+16646 INFO: Building PYZ (ZlibArchive) C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\build\CallCenterUnified\PYZ-00.pyz
+17267 INFO: Building PYZ (ZlibArchive) C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\build\CallCenterUnified\PYZ-00.pyz completed successfully.
+17289 INFO: checking PKG
+17289 INFO: Building PKG because PKG-00.toc is non existent
+17289 INFO: Building PKG (CArchive) CallCenterUnified.pkg
+17325 INFO: Building PKG (CArchive) CallCenterUnified.pkg completed successfully.
+17326 INFO: Bootloader C:\Users\takemaru\AppData\Local\CallCenterBuildPython312Nuget\tools\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+17326 INFO: checking EXE
+17326 INFO: Building EXE because EXE-00.toc is non existent
+17326 INFO: Building EXE from EXE-00.toc
+17327 INFO: Copying bootloader EXE to C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\build\CallCenterUnified\CallCenterUnified.exe
+17383 INFO: Copying icon to EXE
+17427 INFO: Copying 0 resources to EXE
+17427 INFO: Embedding manifest in EXE
+17471 INFO: Appending PKG archive to EXE
+17541 INFO: Fixing EXE headers
+17807 INFO: Building EXE from EXE-00.toc completed successfully.
+17809 INFO: checking COLLECT
+17809 INFO: Building COLLECT because COLLECT-00.toc is non existent
+17810 INFO: Building COLLECT COLLECT-00.toc
+18065 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+18068 INFO: Build complete! The results are available in: C:\Users\takemaru\Downloads\シフト休憩提案アプリ統合版\dist

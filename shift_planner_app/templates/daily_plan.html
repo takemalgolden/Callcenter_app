@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% block content %}
+<h1>{{ day }}｜複数スキル同時受電待機・休憩案</h1>
+<p><a class="btn" href="{{ url_for('index',month=month) }}">← 月間シフトに戻る</a>　<a class="btn" href="/break/">休憩管理へ</a></p>
+{% if session.get('role')=='admin' and shifts and (shifts|selectattr('status','equalto','finalized')|list|length)==shifts|length %}
+<form method="post" action="{{ url_for('send_day_plan_to_break',work_date=day) }}" onsubmit="return confirm('確定シフトの日別休憩・スキル案を休憩管理に送信します。休憩配置は別途確認・確定が必要です。')"><button>この日を休憩管理の配置案に送る</button></form>
+{% endif %}
+<div class="card"><h2>配置結果 <span class="pill">{{ '確定シフト' if status=='finalized' else '仮シフト' }}</span></h2>
+<p>勤務人数：{{ people|length }}名 ／ 10分枠：{{ plan.slots }} ／ 受電優先先の切替提案：{{ plan.skill_switches }}区間</p>
+<p class="small muted">複数スキル保持者はConsumerとMerchantなど登録済みの全スキルで同時に受電待機します。各スキルの受電可能人数には同じ人が含まれます。ただし同時に2件の電話を処理できるとはみなさず、実人数による同時着信リスクを別に確認します。</p>
+{% if plan.coverage_met %}<p style="color:#067647">受電待機人数・同時着信の処理能力・休憩配置の条件を満たした案です。</p>{% else %}<p class="warning">受電待機人数不足：{{ plan.shortages|length }}枠 ／ 同時着信時の実人数不足：{{ plan.get('capacity_warnings', [])|length }}枠 ／ 休憩配置不可：{{ plan.issues|length }}件。警告を確認してください。</p>{% endif %}
+{% for issue in plan.issues %}<div class="warning">{{ issue }}</div>{% endfor %}
+{% if session.get('role')=='admin' %}<form method="post" action="{{ url_for('refresh_day',work_date=day) }}"><button>全対応スキルを考慮して休憩・配置案を再計算</button></form>{% endif %}
+</div>
+<div class="card"><h2>オペレーター別 勤務・休憩</h2>
+<table><thead><tr><th>氏名</th><th>勤務</th><th>主担当（優先）／対応可能スキル</th><th>休憩（有給の短休憩は別表記）</th><th>時間帯別の受電可能キュー／優先スキル</th></tr></thead><tbody>
+{% for e in people %}
+<tr><td>{{ e.name }}</td><td>{{ e.start_time }}–{{ e.end_time }}</td><td><strong>{{ e.primary_skill }}</strong><br><span class="small muted">対応可能：{{ e.skills }}</span></td><td>
+{% for b in plan.breaks.get(e.employee_id|string,[]) %}{{ b.type }} {{ b.start }}–{{ b.end }}{% if b.paid %}（有給）{% endif %}<br>{% else %}—{% endfor %}</td><td>
+{% for seg in plan.segments if seg.employee_id==e.employee_id %}
+<span>{{ seg.start }}–{{ seg.end }}：<strong>{{ seg.skill }}</strong>{% if seg.preferred_skill %}<span class="small muted">（受電優先：{{ seg.preferred_skill }}）</span>{% endif %}</span><br>
+{% endfor %}</td></tr>
+{% endfor %}</tbody></table>
+</div>
+{% if session.get('role')=='admin' %}
+<div class="card"><h2>当日の基本担当スキルを変更</h2>
+<p class="small muted">当日の基本配置として優先するスキルです。複数スキル対応者はこの指定によらず登録済みの全スキルで自動配置候補になります。最終確定済みの日付でも主担当は修正できます。</p>
+<form method="post" action="{{ url_for('edit_daily_primary',work_date=day) }}"><div class="grid">
+<label class="field">オペレーター<select name="employee_id" required>{% for e in people %}<option value="{{ e.employee_id }}">{{ e.name }}（主担当：{{ e.primary_skill }}）</option>{% endfor %}</select></label>
+<label class="field">変更後の主担当<select name="skill">{% for sk in skills %}<option value="{{ sk }}">{{ sk }}</option>{% endfor %}</select></label></div>
+<button {% if not people %}disabled{% endif %}>当日の主担当を更新</button></form>
+</div>
+<div class="card"><h2>時間帯別の受電優先スキルを手動指定</h2>
+<p class="small muted">主担当は維持したまま、この時間帯に優先して受電するスキルを指定します（10分刻み）。他の登録済みスキルも引き続き受電可能です。休憩中はすべての受電待機から外れます。</p>
+<form method="post" action="{{ url_for('edit_daily_skill',work_date=day) }}"><div class="grid">
+<label class="field">オペレーター<select name="employee_id">{% for e in people %}<option value="{{ e.employee_id }}">{{ e.name }}（{{ e.start_time }}–{{ e.end_time }}）</option>{% endfor %}</select></label>
+<label class="field">開始<input type="time" name="start_time" value="09:20" step="600" required></label>
+<label class="field">終了<input type="time" name="end_time" value="10:20" step="600" required></label>
+<label class="field">スキル<select name="skill">{% for sk in skills %}<option value="{{ sk }}">{{ sk }}</option>{% endfor %}</select></label></div>
+<button {% if not people %}disabled{% endif %}>指定時間の受電優先先を変更</button></form>
+{% if overrides %}<h3>現在の一時変更指定</h3><table><tr><th>氏名</th><th>指定時間帯</th><th>スキル</th><th></th></tr>{% for o in overrides %}<tr>
+<td>{{ o.name }}</td><td>{{ o.start_time }}–{{ o.end_time }}</td><td>{{ o.skill }}</td>
+<td><form method="post" action="{{ url_for('delete_daily_skill',work_date=day,override_id=o.id) }}"><button class="danger">解除</button></form></td>
+</tr>{% endfor %}</table>{% endif %}
+</div>{% endif %}
+<div class="card"><h2>10分単位の必要人数／受電可能人数</h2>
+<p class="small muted">兼務者は両キューに数えます。最右列は1人1通話とした場合の同時着信リスクです。</p>
+<div style="overflow:auto;max-height:450px"><table><thead><tr><th>時刻</th>{% for sk in skills %}<th>{{ sk }}（必要 / 受電可能）</th>{% endfor %}<th>実人数</th><th>同時処理枠の不足</th></tr></thead><tbody>
+{% for slot in plan.staffing %}{% if slot.required.values()|sum or slot.assigned.values()|sum %}
+<tr><td>{{ slot.time }}</td>{% for sk in skills %}<td {% if slot.shortage[sk] %}style="background:#fee4e2;color:#912018;font-weight:bold"{% endif %}>{{ slot.required[sk] }} / {{ slot.assigned[sk] }}</td>{% endfor %}<td>{{ slot.distinct_people }}</td><td {% if slot.simultaneous_deficit %}style="background:#fff0cf;color:#835b00;font-weight:bold"{% endif %}>{{ slot.simultaneous_deficit }}</td></tr>
+{% endif %}{% endfor %}</tbody></table></div></div>
+{% endblock %}

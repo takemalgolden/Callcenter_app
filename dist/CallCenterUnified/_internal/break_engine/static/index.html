@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>コールセンター稼働最適化</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d2939;background:#f4f6f9}*{box-sizing:border-box}body{margin:0}header{background:#142c4e;color:white;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}header h1{font-size:18px;margin:0}main{max-width:1200px;margin:22px auto;padding:0 16px}.card{background:white;border:1px solid #e0e5ed;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px #182c4510}.hidden{display:none!important}.muted{color:#667085;font-size:13px}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tab,button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600}.tab{background:#e8edf4;color:#24364b}.tab.active,button.primary{background:#1c5ca8;color:white}button.secondary{background:#e8edf4;color:#24364b}button.danger{background:#fee4e2;color:#912018}button:disabled{opacity:.5;cursor:not-allowed}label{display:block;font-size:13px;font-weight:600;margin:8px 0 5px}input,select{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:inherit}form .field{min-width:140px;flex:1}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #e7ebf0;padding:10px 8px;vertical-align:top}th{color:#475467;background:#f8fafc}.pill{display:inline-block;border-radius:999px;background:#e7f2ff;color:#174a80;padding:3px 8px;font-size:12px}.notice{padding:12px;border-radius:9px;background:#eef6ff;border:1px solid #cfe3ff;margin:10px 0}.error{background:#fff0ee;border-color:#ffd0c9;color:#8b1e12}.success{background:#eaf8ef;border-color:#b9e6c7;color:#176b35}.metric{font-size:26px;font-weight:750}.schedule-scroll{overflow:auto;max-height:540px}.small{font-size:12px}.login{max-width:420px;margin:7vh auto}.password-control{display:flex;gap:6px;align-items:stretch}.password-control input{flex:1;min-width:0}.password-control button{white-space:nowrap;padding:8px 11px}.password-help{font-size:12px;color:#667085;margin:4px 0 8px}.right{margin-left:auto}@media(max-width:600px){header{padding:14px}main{margin:12px auto}.card{padding:14px}table{font-size:12px}}
+</style></head><body>
+<header><h1>▦ コールセンター稼働最適化</h1><div class="row"><span id="who" class="small"></span><button id="logout" class="secondary hidden" onclick="logout()">ログアウト</button></div></header>
+<main>
+<section id="loginView" class="card login"><h2>ログイン</h2><p class="muted">社内LAN内のサーバーに接続しています。</p><form id="loginForm"><label>ユーザー名</label><input id="username" autocomplete="username" required><label>パスワード</label><div class="password-control"><input id="password" type="password" autocomplete="current-password" required><button type="button" class="secondary" data-toggle-password="password" aria-label="パスワードを表示">表示</button></div><button class="primary" type="submit">ログイン</button></form><div id="loginMsg"></div><p><button type="button" class="secondary" onclick="location.href='/signup'">オペレーター新規登録</button></p><div id="signupPanel" class="hidden"><h3>新規登録申請</h3><p class="muted">管理者の承認後にログインできます。管理者権限は申請できません。</p><form id="signupForm"><label>ログインID</label><input name="username" maxlength="100" required><label>表示名</label><input name="display_name" maxlength="100" required><label>パスワード</label><div class="password-control"><input id="signupPassword" name="password" type="password" minlength="8" maxlength="16" required><button type="button" class="secondary" data-toggle-password="signupPassword">表示</button></div><p class="password-help">8〜16文字・英大文字／小文字／数字／記号のうち3種類以上</p><label>パスワード確認</label><input name="password_confirm" type="password" minlength="8" maxlength="16" required><label>勤務開始</label><select name="shift_start" class="time-select" required></select><label>勤務終了</label><select name="shift_end" class="time-select" required></select><p>対応可能スキル</p><label><input type="checkbox" name="skills" value="Consumer" checked> Consumer</label><label><input type="checkbox" name="skills" value="Merchant"> Merchant</label><label><input type="checkbox" name="skills" value="PP"> PP</label><p><button type="submit" class="primary">登録申請する</button></p></form><div id="signupMsg"></div></div></section>
+<section id="appView" class="hidden">
+<div id="status" class="notice">接続中</div>
+<div class="card"><div class="row"><h2 style="margin:0">アカウント・保全</h2><div class="row right"><button id="backupBtn" class="secondary hidden" onclick="downloadBackup()">データをバックアップ</button><label id="restoreLabel" class="hidden" style="margin:0"><input id="restoreFile" type="file" accept=".sqlite3,.db,application/octet-stream" style="display:none" onchange="restoreBackup(this)"><span class="tab" style="display:inline-block">バックアップを復元</span></label></div></div><form id="passwordForm" class="row hidden"><div class="field"><label>現在のパスワード</label><div class="password-control"><input name="old_password" type="password" required autocomplete="current-password"><button type="button" class="secondary" data-toggle-password="old_password" aria-label="パスワードを表示">表示</button></div></div><div class="field"><label>新しいパスワード</label><div class="password-control"><input name="new_password" type="password" required autocomplete="new-password" minlength="8" maxlength="16"><button type="button" class="secondary" data-toggle-password="new_password" aria-label="パスワードを表示">表示</button></div><p class="password-help">8〜16文字。大文字・小文字・数字・記号の4種類のうち3種類以上を含めてください。</p></div><button class="secondary" type="submit">パスワード変更</button></form><div id="accountMsg"></div><p><a href="/password">共通アカウントのパスワード変更</a></p></div>
+<div class="tabs" id="adminTabs"><button class="tab active" data-tab="overview">概要</button><a class="tab" href="/employees">従業員管理・有効化（共通）</a><button class="tab" data-tab="demand">最低稼働人数</button><button class="tab" data-tab="planner">休憩・配置計画</button><button class="tab" data-tab="audit">操作履歴</button></div>
+<section id="operatorPanel" class="card hidden"><h2>自分の予定</h2><div class="row"><label>勤務日 <input id="myWorkDate" type="date" onchange="refreshMyDay()"></label><button type="button" class="secondary" onclick="refreshMyDay()">勤務・休憩予定を更新</button></div><div id="myWorkHours" class="notice">勤務時間を確認しています。</div><div id="mySchedule">予定はまだありません。</div></section>
+<section id="tab-overview" class="tabpage"><div class="grid"><div class="card"><div class="muted">登録オペレーター</div><div id="metricPeople" class="metric">—</div><div class="muted">有効な従業員のみ</div></div><div class="card"><div class="muted">スキル</div><div class="metric">3</div><div class="muted">Consumer / Merchant / PP</div></div><div class="card"><div class="muted">データベース</div><div class="metric" style="font-size:20px">SQLite</div><div class="muted">管理者PC内に保存</div></div></div><div class="card"><h2>使い方</h2><ol><li><a href="/employees">従業員管理（共通）</a>で担当者・スキル・有効状態を管理します。</li><li>最低稼働人数で、スキルごとの必要人数・時間帯を設定します。</li><li>休憩・配置計画で日付を指定して案を作成し、結果を確認します。</li><li>問題がなければ管理者が確定します。</li></ol><div class="notice error"><b>重要：</b>最適化機能は現時点では試作版のヒューリスティックです。実運用の休憩・勤務ルールを検証するまでは、出力結果をそのまま正式シフトとして使用しないでください。</div></div></section>
+<dialog id="workHoursDialog" style="border:1px solid #cbd5e1;border-radius:14px;max-width:480px;width:calc(100% - 30px);padding:22px;box-shadow:0 16px 50px #0004">
+<h3>当日の勤務時間を変更</h3>
+<p id="workHoursTarget" class="muted"></p>
+<p id="workHoursPlanned" class="muted"></p>
+<form id="workHoursForm">
+<div class="row"><div class="field"><label>勤務開始（10分刻み）</label><select name="shift_start" class="time-select" required></select></div><div class="field"><label>勤務終了（10分刻み）</label><select name="shift_end" class="time-select" required></select></div></div>
+<div class="field"><label>変更理由</label><select name="reason" required><option value="遅刻">遅刻</option><option value="早退">早退</option><option value="遅刻・早退">遅刻・早退</option><option value="勤務時間変更">勤務時間変更</option><option value="臨時出勤">臨時出勤</option><option value="その他">その他</option></select></div>
+<div class="field"><label>備考（任意・200文字以内）</label><input name="note" maxlength="200" placeholder="例：交通機関の遅延"></div>
+<div id="workHoursMsg"></div>
+<div class="row" style="justify-content:flex-end;margin-top:15px"><button type="button" id="workHoursReset" class="secondary" onclick="resetDailyWorkHours()">変更を取り消す</button><button type="button" class="secondary" onclick="$('workHoursDialog').close()">キャンセル</button><button class="primary" type="submit">当日の勤務時間を保存</button></div>
+</form></dialog>
+<section id="tab-demand" class="tabpage hidden"><div class="card"><h2>時間帯別の最低稼働人数</h2><p class="muted">時間帯は10分単位で評価します。設定が重複する場合は、該当する最大人数を適用します。</p><form id="demandForm" class="row"><input type="hidden" name="edit_id"><div class="field"><label>スキル</label><select name="skill"><option>Consumer</option><option>Merchant</option><option>PP</option></select></div><div class="field"><label>開始（10分刻み）</label><select name="start_time" class="time-select" required></select></div><div class="field"><label>終了（10分刻み）</label><select name="end_time" class="time-select" required></select></div><div class="field"><label>最低人数</label><input name="min_staff" type="number" min="0" max="200" value="1" required></div><button id="demandSubmit" class="primary" type="submit">登録</button><button id="demandCancelEdit" class="secondary hidden" type="button" onclick="resetDemandForm()">編集をキャンセル</button></form><div id="demandMsg"></div></div><div class="card"><h2>現在の設定</h2><div id="demandTable">読み込み中…</div></div></section>
+<section id="tab-planner" class="tabpage hidden"><div class="card"><h2>休憩・配置計画</h2><p class="muted">主担当は基本配置の目安です。複数スキル対応者はすべての登録スキルで配置候補になり、必要人数と休憩を10分単位で調整します。同じ時刻に1人を複数スキルへ二重計上しません。</p><form id="generateForm" class="row"><div class="field"><label>対象日</label><input name="date" type="date" required></div><button class="secondary" type="button" onclick="loadAttendance()">出勤状況を読み込む</button><button class="primary" type="submit">配置案を生成</button><button class="secondary" type="button" onclick="openDailyPrimaryEditor()">主担当・一時応援を編集</button></form><div class="card" style="background:#f8fafc;margin-top:14px"><h3 style="margin-top:0">当日の出勤確認（有効なオペレーターのみ）</h3><p class="muted">確定シフトの開始・終了時間を自動反映します。遅刻・早退・臨時出勤などは該当者の「当日の勤務時間を変更」から変更できます（その日だけ有効）。出勤チェックを変更した際は「出勤状況を保存」を押してください。</p><div id="attendanceTable">対象日を選択してください。</div><div class="row" style="margin-top:12px"><button class="secondary" type="button" onclick="setAllAttendance(true)">全員を出勤にする</button><button class="secondary" type="button" onclick="setAllAttendance(false)">全員を欠勤にする</button><button class="primary" type="button" onclick="saveAttendance()">出勤状況を保存</button></div><div id="attendanceMsg"></div></div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">休憩時刻を手動で設定</h3><p class="muted">出勤者ごとに午前・昼・午後の開始時刻を選び、手動の配置案を作成できます。作成時に勤務時間・休憩枠を検証します。最低稼働人数を下回る場合は警告を表示し、管理者が2段階確認した場合に限り例外確定できます。休憩ルールは緩和されません。</p><div id="manualBreakEditor">対象日を選択して出勤状況を読み込んでください。</div><div class="row" style="margin-top:12px"><button class="primary" type="button" onclick="submitManualSchedule()">手動設定から配置案を作成</button></div><div id="manualMsg"></div></div><div id="plannerMsg"></div><div id="plannerResult"></div></div></section>
+<section id="tab-audit" class="tabpage hidden"><div class="card"><h2>操作履歴（直近100件）</h2><div id="auditTable">読み込み中…</div></div></section>
+</section></main>
+<script>
+let token='__UNIFIED_TOKEN__', me=null, latestRunId=null, latestShortages=[], eventSource=null;
+const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function initTimeSelects(){document.querySelectorAll('select.time-select').forEach(sel=>{const old=sel.value;let html='';for(let m=0;m<1440;m+=10){const v=String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');html+=`<option value="${v}">${v}</option>`}sel.innerHTML=html;if(old)sel.value=old;});}
+async function api(path,opts={}){const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers['X-Session-Token']=token;const r=await fetch('/break'+path,{...opts,headers});let d={};try{d=await r.json()}catch{}if(!r.ok)throw Error(d.error||(Array.isArray(d.errors)?d.errors.join(' '):'')||`HTTP ${r.status}`);return d}
+function notice(id,msg,kind='notice'){ $(id).innerHTML=`<div class="notice ${kind==='error'?'error':kind==='success'?'success':''}">${esc(msg)}</div>` }
+function setDateDefault(){const d=new Date();const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;$('generateForm').elements.date.value=val;$('myWorkDate').value=val} 
+async function loadMyWorkHours(){const date=$('myWorkDate').value;if(!date)return;try{const d=await api('/api/my-work-hours?date='+encodeURIComponent(date));const u=d.work_hours;$('myWorkHours').textContent=!u?'勤務時間の登録がありません。':u.shift_start?`${date} の勤務予定：${u.shift_start}〜${u.shift_end}${u.source==='override'?' （当日変更：'+u.override_reason+'）':u.source==='finalized'?' （確定シフト）':' （初期設定）'}`:`${date} は勤務予定がありません。`;}catch(e){$('myWorkHours').textContent=e.message}}
+function validPasswordClient(password){if(password.length<8||password.length>16)return false;const kinds=[/[A-Z]/.test(password),/[a-z]/.test(password),/[0-9]/.test(password),/[^A-Za-z0-9]/.test(password)];return kinds.filter(Boolean).length>=3}
+document.querySelectorAll('[data-toggle-password]').forEach(btn=>btn.addEventListener('click',()=>{const input=btn.closest('.password-control')?.querySelector('input');if(!input)return;const visible=input.type==='password';input.type=visible?'text':'password';btn.textContent=visible?'隠す':'表示';btn.setAttribute('aria-label',visible?'パスワードを隠す':'パスワードを表示')}));
+$('signupForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),pw=String(f.get('password')||'');if(!validPasswordClient(pw)||pw!==f.get('password_confirm')){notice('signupMsg','パスワードの条件または確認入力を確認してください。','error');return}try{const d=await api('/api/register',{method:'POST',body:JSON.stringify({username:f.get('username'),display_name:f.get('display_name'),password:pw,skills:f.getAll('skills'),shift_start:f.get('shift_start'),shift_end:f.get('shift_end')})});notice('signupMsg',d.message,'success');e.target.reset()}catch(err){notice('signupMsg',err.message,'error')}});
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({username:$('username').value,password:$('password').value})});token=d.token;me=d.user;sessionStorage.setItem('cc_token',token);await enterApp()}catch(err){notice('loginMsg',err.message,'error')}});
+async function enterApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('logout').classList.remove('hidden');$('logout').onclick=()=>location.href='/logout';$('who').textContent=`${me.display_name}（${me.role==='admin'?'管理者':'オペレーター'}）`;
+const admin=me.role==='admin';$('backupBtn').classList.toggle('hidden',!admin);$('restoreLabel').classList.toggle('hidden',!admin);$('adminTabs').classList.toggle('hidden',!admin);$('operatorPanel').classList.toggle('hidden',admin);document.querySelectorAll('.tabpage').forEach(x=>x.classList.toggle('hidden',!admin));setDateDefault();if(admin){await loadActiveOperatorCount();await loadDemand();await loadAudit()}else{await refreshMyDay()}connectEvents();if(admin)await loadAttendance();}
+async function logout(){try{await api('/api/logout',{method:'POST',body:'{}'})}catch{}token='';me=null;sessionStorage.removeItem('cc_token');if(eventSource)eventSource.close();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('logout').classList.add('hidden');$('who').textContent=''}
+$('logout').addEventListener('click',logout);
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabpage').forEach(x=>x.classList.toggle('hidden',x.id!=='tab-'+b.dataset.tab));if(b.dataset.tab==='demand')loadDemand();if(b.dataset.tab==='audit')loadAudit()}));
+$('passwordForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);if(!validPasswordClient(String(f.get('new_password')||''))){notice('accountMsg','パスワードは8〜16文字で、大文字・小文字・数字・記号の4種類のうち3種類以上を含めてください。','error');return}try{await api('/api/password',{method:'POST',body:JSON.stringify({old_password:f.get('old_password'),new_password:f.get('new_password')})});e.target.reset();notice('accountMsg','パスワードを変更しました。','success')}catch(err){notice('accountMsg',err.message,'error')}});
+async function downloadBackup(){try{const r=await fetch('/break/api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':token},body:'{}'});if(!r.ok){let d={};try{d=await r.json()}catch{}throw Error(d.error||`HTTP ${r.status}`)}const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`callcenter-backup-${new Date().toISOString().slice(0,10)}.sqlite3`;a.click();URL.revokeObjectURL(url);notice('accountMsg','バックアップファイルをダウンロードしました。','success')}catch(e){notice('accountMsg',e.message,'error')}}
+async function restoreBackup(input){const file=input.files?.[0];if(!file)return;if(!confirm('現在のデータをバックアップファイルの内容で置き換えます。事前に現在のバックアップを保存しましたか？')){input.value='';return}try{const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));await api('/api/restore',{method:'POST',body:JSON.stringify({backup_base64:btoa(binary)})});notice('accountMsg','復元しました。画面を再読み込みします。','success');setTimeout(()=>location.reload(),800)}catch(e){notice('accountMsg',e.message,'error')}finally{input.value=''}}
+async function loadActiveOperatorCount(){
+  try{const d=await api('/api/attendance?date='+encodeURIComponent($('generateForm').elements.date.value));
+      $('metricPeople').textContent=d.operators.length;
+  }catch{ $('metricPeople').textContent='—'; }
+}
+async function loadDemand(){try{const d=await api('/api/demand');$('demandTable').innerHTML='<table><thead><tr><th>スキル</th><th>開始</th><th>終了</th><th>最低人数</th><th>操作</th></tr></thead><tbody>'+d.demand.map(x=>`<tr><td>${esc(x.skill)}</td><td>${esc(x.start_time)}</td><td>${esc(x.end_time)}</td><td>${x.min_staff}</td><td><button class="secondary" onclick="editDemand(${x.id})">編集</button> <button class="danger" onclick="deleteDemand(${x.id})">削除</button></td></tr>`).join('')+'</tbody></table>'}catch(e){notice('demandMsg',e.message,'error')}}
+function resetDemandForm(){const f=$('demandForm');f.reset();f.elements.edit_id.value='';f.elements.start_time.value='09:00';f.elements.end_time.value='18:00';f.elements.min_staff.value='1';$('demandSubmit').textContent='登録';$('demandCancelEdit').classList.add('hidden')}
+async function editDemand(id){try{const d=await api('/api/demand');const x=d.demand.find(y=>y.id===id);if(!x)return;const f=$('demandForm');f.elements.edit_id.value=x.id;f.elements.skill.value=x.skill;f.elements.start_time.value=x.start_time;f.elements.end_time.value=x.end_time;f.elements.min_staff.value=x.min_staff;$('demandSubmit').textContent='変更を保存';$('demandCancelEdit').classList.remove('hidden');$('demandMsg').innerHTML='';f.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){notice('demandMsg',e.message,'error')}}
+$('demandForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const id=f.get('edit_id');const payload={skill:f.get('skill'),start_time:f.get('start_time'),end_time:f.get('end_time'),min_staff:Number(f.get('min_staff'))};try{await api(id?'/api/demand/'+id:'/api/demand',{method:id?'PUT':'POST',body:JSON.stringify(payload)});notice('demandMsg',id?'最低稼働人数の設定を更新しました。':'最低稼働人数を登録しました。','success');resetDemandForm();await loadDemand()}catch(err){notice('demandMsg',err.message,'error')}});
+async function deleteDemand(id){if(!confirm('この最低稼働人数の設定を削除しますか？'))return;try{await api('/api/demand/'+id,{method:'DELETE'});notice('demandMsg','設定を削除しました。','success');await loadDemand()}catch(e){notice('demandMsg',e.message,'error')}}
+let attendanceRows=[];
+function selectedDate(){return $('generateForm').elements.date.value}
+function openDailyPrimaryEditor(){const d=selectedDate();if(!d){notice('plannerMsg','先に対象日を選択してください。','error');return}location.href='/daily-plan/'+encodeURIComponent(d)}
+async function loadAttendance(){
+ const date=selectedDate();if(!date){notice('attendanceMsg','対象日を選択してください。','error');return}
+ try{
+  const d=await api('/api/attendance?date='+encodeURIComponent(date));attendanceRows=d.operators;
+  const label=u=>u.source==='override'?'当日変更（'+u.override_reason+'）':u.source==='finalized'?'確定シフト':u.source==='off'?'シフト未割当（確定済み）':'共通の初期設定';
+  $('attendanceTable').innerHTML=attendanceRows.length?'<div class="schedule-scroll"><table><thead><tr><th>出勤</th><th>オペレーター</th><th>当日の勤務時間</th><th>反映元</th><th>当日の主担当</th><th>対応スキル</th><th>操作</th></tr></thead><tbody>'+attendanceRows.map(u=>`<tr><td><input type="checkbox" class="attendance-check" data-user-id="${u.id}" ${u.present?'checked':''} ${!u.shift_start||!u.shift_end?'disabled':''} aria-label="${esc(u.display_name)}の出勤"></td><td>${esc(u.display_name)}</td><td>${u.shift_start?esc(u.shift_start)+'〜'+esc(u.shift_end):'勤務予定なし'}</td><td>${esc(label(u))}</td><td><strong>${esc(u.primary_skill||'未確定')}</strong></td><td>${u.skills.map(esc).join('、')||'なし'}</td><td><button type="button" class="secondary" onclick="editDailyWorkHours(${u.id})">当日の勤務時間を変更</button></td></tr>`).join('')+'</tbody></table></div>':'<p class="muted">有効なオペレーターが登録されていません。</p>';
+  document.querySelectorAll('.attendance-check').forEach(c=>c.addEventListener('change',renderManualBreakEditor));
+  renderManualBreakEditor();notice('attendanceMsg',`${date} の確定シフト・当日の変更を読み込みました。変更後は配置案を再生成してください。`,'success');
+ }catch(e){notice('attendanceMsg',e.message,'error')}
+}
+let editingDailyUser=null;
+function editDailyWorkHours(uid){
+ const u=attendanceRows.find(x=>x.id===uid);if(!u)return;editingDailyUser=uid;
+ $('workHoursTarget').textContent=selectedDate()+' / '+u.display_name;
+ $('workHoursPlanned').textContent='元のシフト：'+(u.planned_start?u.planned_start+'〜'+u.planned_end:'勤務予定なし')+'　現在：'+(u.shift_start?u.shift_start+'〜'+u.shift_end:'勤務予定なし');
+ const f=$('workHoursForm');f.reset();
+ f.elements.shift_start.value=u.shift_start||'09:20';f.elements.shift_end.value=u.shift_end||'18:00';
+ f.elements.reason.value=u.override_reason||'勤務時間変更';f.elements.note.value=u.override_note||'';
+ $('workHoursReset').classList.toggle('hidden',u.source!=='override');$('workHoursMsg').innerHTML='';$('workHoursDialog').showModal();
+}
+$('workHoursForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(editingDailyUser===null)return;
+ const f=new FormData(e.target),start=f.get('shift_start'),end=f.get('shift_end');
+ if(start>=end){notice('workHoursMsg','終了時刻は開始時刻より後にしてください。','error');return}
+ const u=attendanceRows.find(x=>x.id===editingDailyUser);
+ if(!confirm(`${u.display_name} の ${selectedDate()} の勤務時間を ${start}〜${end} に変更します。
+確定シフト自体は変更せず、休憩配置にのみ反映します。よろしいですか？`))return;
+ try{await api('/api/work-hours',{method:'POST',body:JSON.stringify({date:selectedDate(),user_id:editingDailyUser,shift_start:start,shift_end:end,reason:f.get('reason'),note:f.get('note')})});$('workHoursDialog').close();$('plannerResult').innerHTML='';latestRunId=null;await loadAttendance();notice('attendanceMsg','当日の勤務時間を保存しました。休憩・配置案を再生成してください。','success')}catch(err){notice('workHoursMsg',err.message,'error')}
+});
+async function resetDailyWorkHours(){
+ if(editingDailyUser===null||!confirm('この日の変更を取り消し、確定シフト（または初期設定）に戻しますか？'))return;
+ try{await api('/api/work-hours',{method:'DELETE',body:JSON.stringify({date:selectedDate(),user_id:editingDailyUser})});$('workHoursDialog').close();$('plannerResult').innerHTML='';latestRunId=null;await loadAttendance();notice('attendanceMsg','この日の勤務時間変更を取り消しました。配置案を再生成してください。','success')}catch(err){notice('workHoursMsg',err.message,'error')}
+}
+function breakMinutes(value){if(!value)return null;const [h,m]=value.split(':').map(Number);return h*60+m}
+function setFilteredBreakOptions(select,options,preferred){
+ if(!select)return;
+ const current=preferred||select.value;
+ select.innerHTML=options.map(v=>`<option value="${v}">${v}</option>`).join('');
+ if(options.includes(current))select.value=current;
+}
+function refreshManualBreakChoices(userId){
+ const u=attendanceRows.find(r=>r.id===Number(userId));if(!u)return;
+ const get=kind=>document.querySelector(`.manual-break-time[data-user-id="${userId}"][data-kind="${kind}"]`);
+ const lunchSelect=get('lunch'),firstSelect=get('morning'),lastSelect=get('afternoon');
+ if(!lunchSelect||!firstSelect||!lastSelect)return;
+ const lunch=breakMinutes(lunchSelect.value);
+ if(lunch===null)return;
+ const mealLength=Number(u.break_minutes??60)||60;
+ const start=breakMinutes(u.shift_start);
+ const late=['遅番','late'].includes(u.shift_type)||(!['早番','中番','early','middle'].includes(u.shift_type)&&start>=780);
+ const rawFirst=(u.break_options?.morning)||[];
+ const rawLast=(u.break_options?.afternoon)||[];
+ const firstChoices=rawFirst.filter(t=>{
+   const m=breakMinutes(t);
+   if(m+30<=lunch)return true;
+   return late&&m>=lunch+mealLength+20;
+ }).filter(t=>rawLast.some(end=>breakMinutes(end)>=Math.max(lunch+mealLength+20,breakMinutes(t)+30)));
+ const post=firstChoices.filter(t=>breakMinutes(t)>=lunch+mealLength+20);
+ const previous=firstSelect.value;
+ setFilteredBreakOptions(firstSelect,firstChoices,
+   firstChoices.includes(previous)?previous:(late&&post.length?post[0]:firstChoices[0]));
+ const first=breakMinutes(firstSelect.value);
+ const lastChoices=rawLast.filter(t=>breakMinutes(t)>=Math.max(lunch+mealLength+20,(first??0)+30));
+ setFilteredBreakOptions(lastSelect,lastChoices);
+}
+function renderManualBreakEditor(){
+ const checkedIds=new Set(Array.from(document.querySelectorAll('.attendance-check:checked')).map(c=>Number(c.dataset.userId)));
+ const present=attendanceRows.filter(u=>checkedIds.has(u.id));
+ if(!present.length){$('manualBreakEditor').innerHTML='<p class="muted">出勤者がいません。出勤チェックを確認してください。</p>';return}
+ const kinds=['morning','lunch','afternoon'];
+ const selectedTime=(times,index)=>times[Math.min(index%times.length,times.length-1)];
+ const selectFor=(u,kind,index)=>{
+   const times=(u.break_options||{})[kind]||[];
+   if(!times.length)return u.break_required?.[kind] ? '<span class="muted">候補なし（勤務時間を確認）</span>' : '<span class="muted">設定なし</span>';
+   const selected=selectedTime(times,index);
+   return `<select class="manual-break-time" data-user-id="${u.id}" data-kind="${kind}">${times.map(value=>`<option value="${value}" ${value===selected?'selected':''}>${value}</option>`).join('')}</select>`;
+ };
+ $('manualBreakEditor').innerHTML='<p class="muted">昼休憩の開始候補：早番11:30〜13:00、中番13:00〜15:30、遅番15:00〜17:30。遅番は昼休憩を先に取り、その後に10分休憩を2回取る順序も選択できます。昼休憩の選択に応じて10分休憩の候補が切り替わります。</p><div class="schedule-scroll"><table><thead><tr><th>オペレーター</th><th>前半10分休憩</th><th>昼休憩（60分）</th><th>後半10分休憩</th></tr></thead><tbody>'+present.map((u,i)=>`<tr><td>${esc(u.display_name)}<div class="muted">${esc(u.shift_start)}〜${esc(u.shift_end)}</div></td>${kinds.map(kind=>`<td>${selectFor(u,kind,i)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>';
+ for(const u of present){
+   for(const kind of kinds){
+     const control=document.querySelector(`.manual-break-time[data-user-id="${u.id}"][data-kind="${kind}"]`);
+     if(control&&kind!=='afternoon')control.addEventListener('change',()=>refreshManualBreakChoices(u.id));
+   }
+   refreshManualBreakChoices(u.id);
+ }
+}
+async function submitManualSchedule(){
+ const date=selectedDate();if(!date){notice('manualMsg','対象日を選択してください。','error');return}
+ try{
+  const saved=await saveAttendance();if(!saved)return;
+  const breaks=attendanceRows.filter(u=>document.querySelector(`.attendance-check[data-user-id="${u.id}"]`)?.checked).map(u=>{const item={user_id:u.id};for(const kind of ['morning','lunch','afternoon'])item[kind]=document.querySelector(`.manual-break-time[data-user-id="${u.id}"][data-kind="${kind}"]`)?.value||'';return item});
+  if(!breaks.length){notice('manualMsg','出勤者がいません。出勤状況を確認してください。','error');return}
+  notice('manualMsg','手動設定した休憩時刻と最低稼働人数を検証しています…');
+  const d=await api('/api/schedule/manual',{method:'POST',body:JSON.stringify({date,breaks})});latestRunId=d.run_id;notice('manualMsg','手動の配置案を作成しました。内容を確認してから確定してください。','success');renderResult(d.result,d.run_id);
+ }catch(e){notice('manualMsg',e.message,'error');if(e.message.includes('最低稼働人数')||e.message.includes('休憩'))notice('plannerMsg','条件を満たしていないため、この案は保存されていません。休憩時刻を変更して再度お試しください。','error')}
+}
+function setAllAttendance(present){document.querySelectorAll('.attendance-check').forEach(c=>c.checked=present&&!c.disabled);renderManualBreakEditor()}
+async function saveAttendance(){const date=selectedDate();if(!date){notice('attendanceMsg','対象日を選択してください。','error');return false}const attendance=Array.from(document.querySelectorAll('.attendance-check')).map(c=>({user_id:Number(c.dataset.userId),present:c.checked}));try{await api('/api/attendance',{method:'POST',body:JSON.stringify({date,attendance})});notice('attendanceMsg','出勤状況を保存しました。配置案に反映されます。','success');return true}catch(e){notice('attendanceMsg',e.message,'error');return false}}
+$('generateForm').elements.date.addEventListener('change',loadAttendance);
+function breakLabel(type){return ({morning:'午前休憩',lunch:'昼休憩',afternoon:'午後休憩'})[type]||type}
+function displayBreakLabel(item,items){const meal=(items||[]).find(x=>x.type==='lunch'),first=(items||[]).find(x=>x.type==='morning');if(meal&&first&&breakMinutes(first.start)>=breakMinutes(meal.end)){if(item.type==='morning')return '10分休憩①';if(item.type==='afternoon')return '10分休憩②'}return breakLabel(item.type)}
+$('generateForm').addEventListener('submit',async e=>{e.preventDefault();$('plannerResult').innerHTML='';notice('plannerMsg','配置案を計算しています…');const date=new FormData(e.target).get('date');try{const d=await api('/api/schedule/generate',{method:'POST',body:JSON.stringify({date})});latestRunId=d.run_id;notice('plannerMsg','案を作成しました。内容を確認し、問題がなければ確定してください。','success');renderResult(d.result,d.run_id)}catch(err){notice('plannerMsg',err.message,'error');$('plannerResult').innerHTML='<p class="muted">条件を満たす案が作成されなかったため、スケジュールは確定されていません。最低人数、勤務時間、スキル構成、休憩条件を見直してください。</p>'}});
+function renderResult(r,id){latestShortages=r.shortages||[];let b=latestShortages.length?`<div class="notice error"><b>受電待機人数不足・同時着信の処理能力に関する警告：${latestShortages.length}件</b><p>受電待機人数の不足、または実人数で同時着信を処理できない時間帯があります。複数スキル兼務者は両キューに待機できますが、1人で2通話は処理できません。例外確定には管理者による2段階確認が必要です。</p><div class="schedule-scroll"><table><thead><tr><th>時刻</th><th>スキル</th><th>必要人数</th><th>受電可能人数 / 実人数</th><th>不足</th></tr></thead><tbody>${latestShortages.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.skill||'—')}</td><td>${esc(x.required??'—')}</td><td>${esc(x.eligible_available??'—')}</td><td>${esc(x.shortage??'—')}</td></tr>`).join('')}</tbody></table></div></div>`:'';b+=`<h3>出勤状況</h3><p>出勤：${(r.attendance?.present||[]).length}人 / 欠勤：${(r.attendance?.absent||[]).length}人</p>${(r.attendance?.absent||[]).length?'<p>欠勤：'+r.attendance.absent.map(x=>esc(x.name)).join('、')+'</p>':''}<h3>休憩案</h3><table><thead><tr><th>オペレーター</th><th>休憩</th></tr></thead><tbody>`;for(const [uid,items] of Object.entries(r.breaks||{})){const attendee=attendanceRows.find(u=>String(u.id)===String(uid));const attendeeName=(r.schedule.find(x=>String(x.operator_id)===String(uid))||{}).operator||attendee?.display_name||('ID '+uid);b+=`<tr><td>${esc(attendeeName)}</td><td>${items.map(x=>`${esc(displayBreakLabel(x,items))} ${esc(x.start)}–${esc(x.end)}`).join('<br>')}</td></tr>`}b+='</tbody></table><h3>受電可能キュー（10分単位）</h3><p class="muted">複数スキル保持者は全対応キューで同時に受電待機します。必要人数判定に同じ人が現れても通話を同時に2件処理する扱いにはなりません。</p><div class="schedule-scroll"><table><thead><tr><th>時刻</th><th>オペレーター</th><th>受電可能キュー</th></tr></thead><tbody>';b+=r.schedule.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.operator)}</td><td>${esc(x.on_break?'休憩':x.skill)}${!x.on_break&&x.preferred_skill?'（優先：'+esc(x.preferred_skill)+'）':''}</td></tr>`).join('');b+='</tbody></table></div><p class="muted">'+esc(r.note||'')+'</p><button class="primary" onclick="confirmSchedule('+id+')">この案を確定</button>'; $('plannerResult').innerHTML=b}
+async function confirmSchedule(id){
+ if(latestShortages.length){
+  const summary=latestShortages.slice(0,8).map(x=>`${x.time} ${x.skill||''}：不足${x.shortage??'?'}人`).join('\n');
+  if(!confirm(`【1回目の確認】受電待機人数の不足、または同時着信の処理能力不足があります。\n${summary}${latestShortages.length>8?'\nほか '+(latestShortages.length-8)+' 件':''}\n\n不足を承知して例外確定の2回目確認に進みますか？`))return;
+  try{await api('/api/schedule/confirm',{method:'POST',body:JSON.stringify({run_id:id,override_stage:1})});}catch(e){notice('plannerMsg',e.message,'error');return}
+  if(!confirm('【2回目の確認】受電待機人数または同時着信の処理能力不足を承認して確定します。確定後、この配置案はオペレーターに共有されます。内容を再確認し、例外確定しますか？')){notice('plannerMsg','2回目の確認がキャンセルされたため、案は未確定のままです。','error');return}
+  try{await api('/api/schedule/confirm',{method:'POST',body:JSON.stringify({run_id:id,override_stage:2})});notice('plannerMsg','警告を承認して例外確定しました。最低稼働人数不足の履歴を記録しました。','success')}catch(e){notice('plannerMsg',e.message,'error')}return;
+ }
+ if(!confirm('この配置案を確定し、利用者に共有しますか？'))return;try{await api('/api/schedule/confirm',{method:'POST',body:JSON.stringify({run_id:id})});notice('plannerMsg','スケジュールを確定しました。','success')}catch(e){notice('plannerMsg',e.message,'error')}
+}
+async function refreshMyDay(){await Promise.all([loadMyWorkHours(),loadMySchedule()])}
+async function loadMySchedule(){
+ const date=$('myWorkDate').value;
+ if(!date)return;
+ try{
+  const d=await api('/api/schedule/latest?date='+encodeURIComponent(date));
+  if($('myWorkDate').value!==date)return;
+  if(!d.run){$('mySchedule').textContent=date+'の休憩案はまだありません（勤務日・シフト確定状況を確認してください）。';return}
+  const r=d.run.result;
+  const proposed=d.run.status==='provisional';
+  const state=proposed?'休憩仮案（未確定）':'休憩確定済み';
+  const ownBreaks=(r.breaks||{})[String(me.id)]||[];
+  const myBreaks=ownBreaks.map(x=>`<li>${esc(displayBreakLabel(x,ownBreaks))}：${esc(x.start)}〜${esc(x.end)}</li>`).join('');
+  const shifts=(r.schedule||[]).map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.on_break?'休憩':x.skill)}${!x.on_break&&x.preferred_skill?'（優先：'+esc(x.preferred_skill)+'）':''}</td></tr>`).join('');
+  $('mySchedule').innerHTML=`<div class="notice ${proposed?'':'success'}"><strong>${esc(date)}：${esc(state)}</strong><div class="small">${esc(r.note||'')}</div></div><h3>休憩予定</h3>${myBreaks?'<ul>'+myBreaks+'</ul>':'<p class="muted">この日の休憩時刻は未設定です。</p>'}<h3>時間帯別の受電可能キュー</h3><p class="muted">複数スキルは同時待機可能ですが、同時に2通話を処理できるわけではありません。</p><div class="schedule-scroll"><table><thead><tr><th>時刻</th><th>状態</th></tr></thead><tbody>${shifts}</tbody></table></div>`;
+ }catch(e){if($('myWorkDate').value===date)$('mySchedule').textContent=e.message}
+}
+async function loadAudit(){try{const d=await api('/api/audit');$('auditTable').innerHTML='<table><thead><tr><th>日時</th><th>ユーザー</th><th>操作</th><th>詳細</th></tr></thead><tbody>'+d.logs.map(x=>`<tr><td>${esc(x.created_at)}</td><td>${esc(x.username||'—')}</td><td>${esc(x.action)}</td><td>${esc(x.details)}</td></tr>`).join('')+'</tbody></table>'}catch(e){$('auditTable').textContent=e.message}}
+function connectEvents(){setInterval(()=>{if(me?.role==='admin'){loadDemand();}else{loadMySchedule();}},10000)}
+
+(async()=>{initTimeSelects();$('demandForm').elements.start_time.value='09:00';$('demandForm').elements.end_time.value='18:00';if(token){try{const d=await api('/api/me');me=d.user;await enterApp()}catch{sessionStorage.removeItem('cc_token');token=''}}})();
+</script></body></html>
